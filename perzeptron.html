@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script>
+  </head>
+
+  <body>
+    <button type="button" id="train">Trainiere</button>
+    <button type="button" id="test">Teste</button>
+    <button type="button" id="reset">Reset</button>
+    <div id="drawing"></div>
+
+    <script>
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      let parcels = [
+        {
+          lightness: 4,
+          size: 3,
+          gift: false,
+        },
+        {
+          lightness: 1,
+          size: 2,
+          gift: true,
+        },
+        {
+          lightness: 2,
+          size: 1,
+          gift: false,
+        },
+        {
+          lightness: 4,
+          size: 4,
+          gift: true,
+        },
+        {
+          lightness: 3,
+          size: 2,
+          gift: false,
+        },
+      ];
+
+      let testParcels = [
+        {
+          lightness: 5,
+          size: 3,
+          gift: false,
+        },
+        {
+          lightness: 1,
+          size: 4,
+          gift: true,
+        },
+        {
+          lightness: 4,
+          size: 1,
+          gift: false,
+        },
+        {
+          lightness: 1,
+          size: 3,
+          gift: true,
+        },
+      ];
+
+      let draw = SVG().size(800, 400).addTo("#drawing");
+      let giftSVG = draw.circle(25).center(100, 250).fill("#FFC129").hide();
+      let parcelSVG = draw.rect(110, 110).center(100, 200).fill("hsl(200, 100%, 70%)");
+      let parcelLid = draw
+        .rect(130, 130)
+        .center(100, parcelSVG.y())
+        .fill("hsl(200, 100%, 70%)");
+
+      let flipLid = () => {
+        parcelLid.animate({ delay: 500 }).opacity(0);
+      };
+      let lightnessToGuess = draw.line(300, 100, 700, 200).stroke({
+        width: 10,
+        color: "black",
+      });
+      let sizeToGuess = draw.line(300, 300, 700, 200).stroke({
+        width: 10,
+        color: "black",
+      });
+      let lightnessWeightText = draw
+        .text("Wichtigkeit")
+        .font({
+          size: "1.5em",
+          anchor: "middle",
+        })
+        .center(500, 100);
+      let lightnessWeightValueText = draw
+        .text("1")
+        .font({
+          size: "1.5em",
+          anchor: "middle",
+        })
+        .center(500, 150);
+      let lightnessWeightBox = draw
+        .rect(50, 50)
+        .fill("hsl(0, 0%, 100%)")
+        .stroke({
+          width: 2,
+          color: "#000",
+        })
+        .center(500, 150);
+      let lightnessWeightGroup = draw.group();
+      lightnessWeightGroup.add(lightnessWeightBox);
+      lightnessWeightGroup.add(lightnessWeightValueText);
+
+      let sizeWeightValueText = draw
+        .text("1")
+        .font({
+          size: "1.5em",
+          anchor: "middle",
+        })
+        .center(500, 250);
+      let sizeWeightBox = draw
+        .rect(50, 50)
+        .fill("hsl(0, 0%, 100%)")
+        .stroke({
+          width: 2,
+          color: "#000",
+        })
+        .center(500, 250);
+      let sizeWeightGroup = draw.group();
+      sizeWeightGroup.add(sizeWeightBox);
+      sizeWeightGroup.add(sizeWeightValueText);
+
+      let sizeWeightText = draw
+        .text("Wichtigkeit")
+        .font({
+          size: "1.5em",
+          anchor: "middle",
+        })
+        .center(500, 300);
+
+      let lightnessValueCircle = draw
+        .circle(50)
+        .center(300, 100)
+        .fill("hsl(200, 100%, 50%)")
+        .stroke({
+          width: 2,
+          color: "#000",
+        });
+      let lightnessValueText = draw
+        .text("4")
+        .font({
+          size: "1.5em",
+          fill: "#FFF",
+          anchor: "middle",
+        })
+        .center(300, 100);
+
+      let lightnessOperatorCircle = draw
+        .circle(50)
+        .center(300, 100)
+        .fill("black")
+        .stroke({
+          width: 2,
+          color: "#000",
+        });
+      let lightnessOperatorText = draw
+        .text("*")
+        .font({
+          size: "1.5em",
+          fill: "#FFF",
+          anchor: "middle",
+        })
+        .center(300, 100);
+      let lightnessOperatorGroup = draw.group();
+      lightnessOperatorGroup.add(lightnessOperatorCircle);
+      lightnessOperatorGroup.add(lightnessOperatorText);
+
+      let sizeOperatorCircle = draw.circle(50).center(300, 300).fill("black").stroke({
+        width: 2,
+        color: "#000",
+      });
+      let sizeOperatorText = draw
+        .text("*")
+        .font({
+          size: "1.5em",
+          fill: "#FFF",
+          anchor: "middle",
+        })
+        .center(300, 300);
+      let sizeOperatorGroup = draw.group();
+      sizeOperatorGroup.add(sizeOperatorCircle);
+      sizeOperatorGroup.add(sizeOperatorText);
+
+      let sizeValueRect = draw.rect(50, 50).center(300, 300).fill("white").stroke({
+        width: 2,
+        color: "#000",
+      });
+      let sizeValueText = draw
+        .text("3")
+        .font({
+          size: "1.5em",
+          fill: "#000",
+          anchor: "middle",
+        })
+        .center(300, 300);
+
+      let lightnessValueGroup = draw.group();
+      lightnessValueGroup.add(lightnessValueCircle);
+      lightnessValueGroup.add(lightnessValueText);
+
+      let sizeValueGroup = draw.group();
+      sizeValueGroup.add(sizeValueRect);
+      sizeValueGroup.add(sizeValueText);
+
+      let lightnessSVG = draw
+        .circle(150)
+        .center(300, 100)
+        .fill("hsl(200, 100%, 50%)")
+        .stroke({
+          width: 2,
+          color: "#000",
+        });
+      let lightnessText = draw
+        .text("Helligkeit\n3")
+        .font({
+          size: "1.5em",
+          fill: "hsl(0, 0%, 100%)",
+          anchor: "middle",
+        })
+        .center(300, 100);
+      let sizeSVG = draw.rect(150, 150).center(300, 300).fill("white").stroke({
+        width: 2,
+        color: "#000",
+      });
+      let sizeText = draw
+        .text("Größe\n1")
+        .font({
+          size: "1.5em",
+          anchor: "middle",
+        })
+        .center(300, 300);
+
+      let guessSVG = draw.circle(120).center(700, 200).fill("white").stroke({
+        width: 2,
+        color: "#000",
+      });
+      let guessText = draw
+        .text("Vermutung")
+        .font({
+          size: "1.5em",
+          anchor: "middle",
+        })
+        .center(700, 200);
+      let guessLightnessCalcText = draw
+        .text("")
+        .font({
+          size: "1.5em",
+          anchor: "middle",
+        })
+        .center(700, 170);
+      let guessSizeCalcText = draw
+        .text("")
+        .font({
+          size: "1.5em",
+          anchor: "middle",
+        })
+        .center(700, 230);
+
+      let checkMark = draw.group();
+      checkMark.line(700, 220, 675, 205).stroke({
+        width: 10,
+        color: "green",
+        linecap: "round",
+      });
+      checkMark.line(700, 220, 720, 170).stroke({
+        width: 10,
+        color: "green",
+        linecap: "round",
+      });
+      checkMark.hide();
+
+      let xMark = draw.group();
+      xMark.line(680, 180, 720, 220).stroke({
+        width: 10,
+        color: "red",
+        linecap: "round",
+      });
+      xMark.line(720, 180, 680, 220).stroke({
+        width: 10,
+        color: "red",
+        linecap: "round",
+      });
+      xMark.hide();
+
+      let perceptron = {
+        runners: [],
+        timeline: null,
+        animate: true,
+        weightLightness: 1,
+        weightSize: 1,
+        animationCancelled: false,
+        setLightnessCalcText(parcel, delay, calcDelay = 1000) {
+          this.scheduleRunner(delay, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            guessLightnessCalcText.clear();
+            guessLightnessCalcText.text(`${parcel.lightness * this.weightLightness}`);
+            guessLightnessCalcText.center(700, 170);
+          });
+          this.scheduleRunner(delay + calcDelay, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            guessLightnessCalcText.clear();
+            guessLightnessCalcText.text(`${this.weightLightness * parcel.lightness}`);
+            guessLightnessCalcText.center(700, 170);
+          });
+        },
+        setSizeCalcText(parcel, delay, calcDelay = 1000) {
+          this.scheduleRunner(delay, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            guessSizeCalcText.clear();
+            guessSizeCalcText.text(`${parcel.size * this.weightSize}`);
+            guessSizeCalcText.center(700, 230);
+          });
+          this.scheduleRunner(delay + calcDelay, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            guessSizeCalcText.clear();
+            guessSizeCalcText.text(`${this.weightSize * parcel.size}`);
+            guessSizeCalcText.center(700, 230);
+          });
+        },
+        animateCalc(parcel, guess, delay, calcDelay = 1000) {
+          let keyTime = delay;
+          this.setLightnessCalcText(parcel, delay, calcDelay);
+          this.setSizeCalcText(parcel, delay, calcDelay);
+          this.scheduleRunner(keyTime, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            guessText.clear();
+            guessText.text("+");
+          });
+          keyTime += calcDelay;
+          this.scheduleRunner(keyTime, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            guessLightnessCalcText.clear();
+            guessSizeCalcText.clear();
+            guessText.clear();
+            guessText.text(`${guess}`);
+          });
+          keyTime += calcDelay;
+          this.scheduleRunner(keyTime, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            guessText.clear();
+            guessText.text(`${guess} > 0`);
+          });
+          keyTime += calcDelay;
+          this.scheduleRunner(keyTime, () => {
+            guessSVG.fill(guess > 0 ? "#FFC129" : "#FFF");
+            this.setGuessSVG(guess);
+          });
+          return keyTime;
+        },
+        animateCalcInputs(parcel) {
+          let keyTime = 0;
+          lightnessValueText.text(`${parcel.lightness}`);
+          lightnessValueCircle.fill(`hsl(200, 100%, ${parcel.lightness * 20 - 10}%)`);
+
+          sizeValueText.text(`${parcel.size}`);
+          lightnessOperatorGroup.animate(2000, 0, "absolute").ease("-").center(700, 200);
+          lightnessValueGroup.animate(2000, 250, "absolute").ease("-").center(700, 200);
+
+          sizeOperatorGroup.animate(2000, 0, "absolute").ease("-").center(700, 200);
+          sizeValueGroup.animate(2000, 250, "absolute").ease("-").center(700, 200);
+          this.scheduleRunner(keyTime, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            guessText.text("+");
+          });
+          keyTime += 1000 - 250;
+          lightnessWeightGroup
+            .animate(1000, keyTime, "absolute")
+            .ease("-")
+            .center(700, 200);
+          sizeWeightGroup.animate(1000, keyTime, "absolute").ease("-").center(700, 200);
+          return keyTime;
+        },
+        animateCalcOutputs(parcel, guess, keyTime) {
+          if (guess > 0 && parcel.gift === false) {
+            // subtract
+            lightnessOperatorText.text("-");
+            sizeOperatorText.text("-");
+          }
+          if (guess < 0 && parcel.gift === true) {
+            lightnessOperatorText.text("+");
+            sizeOperatorText.text("+");
+          }
+          if (guess > 0 !== parcel.gift) {
+            lightnessOperatorGroup
+              .animate(2000, keyTime + 500, "absolute")
+              .ease("-")
+              .center(500, 150);
+            sizeOperatorGroup
+              .animate(2000, keyTime + 500, "absolute")
+              .ease("-")
+              .center(500, 250);
+            lightnessValueGroup
+              .animate(2000, keyTime + 1000, "absolute")
+              .ease("-")
+              .center(500, 150);
+            sizeValueGroup
+              .animate(2000, keyTime + 1000, "absolute")
+              .ease("-")
+              .center(500, 250);
+          }
+          lightnessWeightGroup
+            .animate(2000, keyTime, "absolute")
+            .ease("-")
+            .center(500, 150);
+          sizeWeightGroup.animate(2000, keyTime, "absolute").ease("-").center(500, 250);
+          keyTime += 3000;
+          this.scheduleRunner(keyTime, () => {
+            if (this.animationCancelled) {
+              return;
+            }
+            lightnessWeightValueText.text(`${this.weightLightness}`);
+            lightnessValueGroup.center(300, 100);
+            lightnessOperatorGroup.center(300, 100);
+            sizeWeightValueText.text(`${this.weightSize}`);
+            sizeOperatorGroup.center(300, 300);
+            sizeValueGroup.center(300, 300);
+          });
+          return keyTime;
+        },
+        setGuessSVG(guess) {
+          guessText.clear();
+          guessText.text(guess > 0 ? "Geschenk" : "leer");
+          guessSVG.fill(guess > 0 ? "#FFC129" : "#FFF");
+        },
+        scheduleRunner(delay, func, when = "absolute") {
+          const runner = new SVG.Runner();
+          this.runners.push(runner);
+          this.timeline.schedule(runner, delay, when); // runner, delay, when - see animate()
+          runner.after(func);
+        },
+        stopTimeline() {
+          this.timeline.stop();
+          this.animationCancelled = true;
+          for (const runner of this.runners) {
+            runner.finish();
+            this.timeline.unschedule(runner);
+          }
+          this.runners = [];
+          xMark.hide();
+          checkMark.hide();
+        },
+        createTimeline() {
+          let timeline = new SVG.Timeline();
+          lightnessWeightGroup.timeline(timeline);
+          lightnessValueGroup.timeline(timeline);
+          guessLightnessCalcText.timeline(timeline);
+          sizeWeightGroup.timeline(timeline);
+          sizeValueGroup.timeline(timeline);
+          guessSizeCalcText.timeline(timeline);
+          lightnessOperatorGroup.timeline(timeline);
+          sizeOperatorGroup.timeline(timeline);
+          this.timeline = timeline;
+        },
+        _update(parcel, guess) {
+          if (
+            (guess > 0 && parcel.gift === true) ||
+            (guess < 0 && parcel.gift === false)
+          ) {
+            xMark.hide();
+            checkMark.show();
+            return this;
+          } else if (guess > 0 && parcel.gift === false) {
+            this.weightLightness -= parcel.lightness;
+            this.weightSize -= parcel.size;
+            lightnessToGuess
+              .animate({
+                when: "now",
+              })
+              .stroke({
+                width: (this.weightLightness + 10) * 2,
+              });
+            sizeToGuess
+              .animate({
+                when: "now",
+              })
+              .stroke({
+                width: (this.weightSize + 10) * 2,
+              });
+          } else {
+            this.weightLightness += parcel.lightness;
+            this.weightSize += parcel.size;
+          }
+          lightnessToGuess.animate().stroke({
+            width: (this.weightLightness + 10) * 2,
+          });
+          sizeToGuess.animate().stroke({
+            width: (this.weightSize + 10) * 2,
+          });
+          checkMark.hide();
+          xMark.show();
+          return this;
+        },
+        resetSVG() {
+          lightnessValueGroup.center(300, 100);
+          lightnessOperatorGroup.center(300, 100);
+          lightnessWeightGroup.center(500, 150);
+          sizeValueGroup.center(300, 300);
+          sizeOperatorGroup.center(300, 300);
+          sizeWeightGroup.center(500, 250);
+          lightnessOperatorText.text("*");
+          sizeOperatorText.text("*");
+          guessSVG.fill("#FFF");
+          guessText.text("Vermutung");
+          parcelLid.opacity(1);
+        },
+        update(parcel) {
+          this.timeline && this.stopTimeline();
+          this.resetSVG();
+          let guess =
+            parcel.lightness * this.weightLightness + parcel.size * this.weightSize;
+          if (this.animate) {
+            this.createTimeline();
+            this.animationCancelled = false;
+            let keyTime = this.animateCalcInputs(parcel);
+            keyTime += this.animateCalc(parcel, guess, 1500);
+            let xMarkDelay = 500;
+            keyTime += xMarkDelay;
+            this.scheduleRunner(
+              keyTime,
+              () => {
+                this._update(parcel, guess);
+              },
+              "absolute"
+            );
+            keyTime += 1000;
+            this.animateCalcOutputs(parcel, guess, keyTime);
+          } else {
+            this.setGuessSVG(guess);
+            return this._update(parcel, guess);
+          }
+        },
+        guess(input) {
+          let guess =
+            input.lightness * this.weightLightness + input.size * this.weightSize;
+          guessText.text(guess > 0 ? "Geschenk" : "leer");
+          guessSVG.fill(guess > 0 ? "#FFC129" : "#FFF");
+          return guess > 0 ? true : false;
+        },
+        reset() {
+          this.weightLightness = 1;
+          this.weightSize = 1;
+        },
+        setParcelSVG(parcel) {
+          lightnessSVG.fill(`hsl(200, 100%, ${parcel.lightness * 20 - 10}%)`);
+          lightnessText.text(`Helligkeit\n${parcel.lightness}`);
+          parcelSVG.fill(`hsl(200, 100%, ${parcel.lightness * 20 - 10}%)`);
+          parcelLid.fill(`hsl(200, 100%, ${parcel.lightness * 20 - 10}%)`);
+          sizeText.text(`Größe\n${parcel.size}`);
+          sizeSVG.size(parcel.size * 10 + 100, parcel.size * 10 + 100).center(300, 300);
+          parcelSVG
+            .size(parcel.size * 10 + 100, parcel.size * 10 + 100)
+            .center(-100, 200);
+          parcelLid
+            .size(parcel.size * 10 + 120, parcel.size * 10 + 10)
+            .center(-100, parcelSVG.y());
+          lightnessWeightValueText.text(`${this.weightLightness}`);
+          sizeWeightValueText.text(`${this.weightSize}`);
+        },
+      };
+
+      function* getParcels() {
+        for (let i = 0; i < 5; i++) {
+          for (let parcel of parcels) {
+            giftSVG.center(100, 200);
+            giftSVG.hide();
+            perceptron.setParcelSVG(parcel);
+            parcelLid.animate().cx(100);
+            parcelSVG.animate().cx(100).after(flipLid);
+            (() => {
+              sleep(500).then((_) => parcel.gift && giftSVG.show());
+            })();
+            giftSVG.animate(1700, 0).center(100, 50);
+            perceptron.update(parcel);
+            yield parcel;
+          }
+        }
+      }
+
+      let gen = getParcels();
+      const train = () => gen.next().value;
+
+      const trainButton = document.getElementById("train");
+      trainButton.addEventListener("click", train, false);
+
+      function* getTestParcels() {
+        yield* testParcels;
+      }
+
+      let genTest = getTestParcels();
+
+      const test = () => {
+        const parcel = genTest.next().value;
+        if (!parcel) return;
+        giftSVG.center(100, 200);
+        giftSVG.hide();
+        checkMark.hide();
+        xMark.hide();
+        parcelLid.opacity(1);
+
+        perceptron.setParcelSVG(parcel);
+        (() => {
+          sleep(500).then((_) => parcel.gift && giftSVG.show());
+        })();
+        giftSVG.animate(1700, 0).center(100, 50);
+
+        parcelLid.animate().cx(100);
+        parcelSVG.animate().cx(100).after(flipLid);
+        const guess = perceptron.guess(parcel);
+        if ((guess && parcel.gift === true) || (!guess && parcel.gift === false)) {
+          checkMark.show();
+        } else {
+          xMark.show();
+        }
+      };
+      const testButton = document.getElementById("test");
+      testButton.addEventListener("click", test, false);
+
+      let reset = () => {
+        perceptron.stopTimeline();
+        perceptron.reset();
+        perceptron.resetSVG();
+        gen = getParcels();
+        genTest = getTestParcels();
+        giftSVG.center(100, 200);
+        giftSVG.hide();
+        xMark.hide();
+        checkMark.hide();
+        lightnessToGuess.stroke({
+          width: (perceptron.weightLightness + 10) * 2,
+        });
+        sizeToGuess.stroke({
+          width: (perceptron.weightSize + 10) * 2,
+        });
+        perceptron.setParcelSVG(parcels[0]);
+      };
+      const resetButton = document.getElementById("reset");
+      resetButton.addEventListener("click", reset, false);
+
+      perceptron.setParcelSVG(parcels[0]);
+    </script>
+  </body>
+</html>
