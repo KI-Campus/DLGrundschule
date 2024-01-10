@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <style>
+        body {
+            box-sizing: border-box;
+            --box-color-dark: hsl(240, 100%, 20%);
+            --lid-color-dark: hsl(240, 100%, 10%);
+            --box-color-medium: hsl(240, 100%, 50%);
+            --lid-color-medium: hsl(240, 100%, 40%);
+            --box-color-light: hsl(210, 100%, 60%);
+            --lid-color-light: hsl(210, 100%, 50%);
+        }
+
+        .container--rows {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .gift {
+            margin: 20px;
+        }
+
+        .gift--size-small {
+            transform: scale(0.5);
+        }
+
+        .gift--size-medium {
+            transform: scale(0.75);
+        }
+
+        .gift--size-big {
+            transform: scale(1);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lid {
+            width: 110px;
+            height: 30px;
+            border: solid;
+        }
+
+        .lid--color {
+            background-color: var(--lid-color-dark);
+        }
+
+        .lid--color-dark {
+            background-color: var(--lid-color-dark);
+        }
+
+        .lid--color-medium {
+            background-color: var(--lid-color-medium);
+        }
+
+        .lid--color-light {
+            background-color: var(--lid-color-light);
+        }
+
+        .box {
+            width: 100px;
+            height: 80px;
+            background-color: var(--box-color-dark);
+            border: solid;
+        }
+
+        .box--color {
+            background-color: var(--box-color-dark);
+        }
+
+        .box--color-dark {
+            background-color: var(--box-color-dark);
+        }
+
+        .box--color-medium {
+            background-color: var(--box-color-medium);
+        }
+
+        .box--color-light {
+            background-color: var(--box-color-light);
+        }
+
+        .ribbon-lid-vertical {
+            width: 15px;
+            height: 35px;
+            background-color: #FFC129;
+            position: absolute;
+        }
+
+        .ribbon-box-vertical {
+            width: 15px;
+            height: 85px;
+            background-color: #FFC129;
+            position: absolute;
+        }
+
+        .ribbon-box-horizontal {
+            width: 105px;
+            height: 15px;
+            background-color: #FFC129;
+            margin-top: -25px;
+        }
+
+        .circle {
+            width: 25px;
+            height: 25px;
+            border-radius: 100%;
+            background-color: orange;
+            position: absolute;
+            opacity: 1;
+            z-index: -1;
+        }
+
+        input {
+            width: 70px;
+        }
+
+        button {
+            width: 70px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+    <div class="container">
+        <div id="gifts" class="container--rows">
+        </div>
+        <form id="form-check-rule">
+            <fieldset id="fieldset-outer">
+                <legend>
+                    <button id="button-check">Check</button>
+                    <button id="button-solve">Auflösen</button>
+                    <input type="text" id="box-number" placeholder="Boxanzahl" onkeypress='validate(event)'>
+                    <select id="select-mode">
+                        <option value="easy">einfach</option>
+                        <option value="medium">mittel</option>
+                        <option value="hard">schwer</option>
+                    </select>
+                    <button id="button-new">Neu</button>
+                </legend>
+                <fieldset class="container--rows" id="feature-color">
+                    <legend>Helligkeit</legend>
+                    <input type="checkbox" id="color--light" name="color--light">
+                    <label for="horns">hell</label>
+                    <input type="checkbox" id="color--medium" name="color--medium">
+                    <label for="horns">mittel</label>
+                    <input type="checkbox" id="color--dark" name="color--dark">
+                    <label for="scales">dunkel</label>
+                </fieldset>
+                <fieldset class="container--rows" id="feature-size">
+                    <legend>Größe</legend>
+                    <input type="checkbox" id="size--small" name="size--small">
+                    <label for="horns">klein</label>
+                    <input type="checkbox" id="size--medium" name="size--medium">
+                    <label for="horns">mittel</label>
+                    <input type="checkbox" id="size--big" name="size--big">
+                    <label for="scales">groß</label>
+                </fieldset>
+                <fieldset class="container--rows" id="feature-">
+                    <legend>Schleife</legend>
+                    <input type="checkbox" id="ribbon--none" name="ribbon--none">
+                    <label for="horns">ohne</label>
+                    <input type="checkbox" id="ribbon--vertical" name="ribbon--vertical">
+                    <label for="horns">längs</label>
+                    <input type="checkbox" id="ribbon--horizontal" name="ribbon--horizontal">
+                    <label for="scales">längs & quer</label>
+                </fieldset>
+            </fieldset>
+        </form>
+    </div>
+    <script>
+        /* allow only numbers: https://stackoverflow.com/questions/469357/html-text-input-allow-only-numeric-input*/
+        function validate(evt) {
+            var theEvent = evt || window.event;
+            // Handle paste
+            if (theEvent.type === 'paste') {
+                key = event.clipboardData.getData('text/plain');
+            } else {
+                // Handle key press
+                var key = theEvent.keyCode || theEvent.which;
+                key = String.fromCharCode(key);
+            }
+            var regex = /[0-9]/;
+            if (!regex.test(key)) {
+                theEvent.returnValue = false;
+                if (theEvent.preventDefault) theEvent.preventDefault();
+            }
+        }
+        /* create nested dom nodes https://idiallo.com/javascript/create-dom-elements-faster */
+        const ml = (tagName, props, nest) => {
+            const el = document.createElement(tagName);
+            if (props) {
+                for (const name in props) {
+                    if (name.indexOf("on") === 0) {
+                        el.addEventListener(name.substr(2).toLowerCase(), props[name], false)
+                    } else {
+                        el.setAttribute(name, props[name]);
+                    }
+                }
+            }
+            if (!nest) {
+                return el;
+            }
+            return nester(el, nest)
+        }
+        const nester = (el, n) => {
+            if (typeof n === "string") {
+                const t = document.createTextNode(n);
+                el.appendChild(t);
+            } else if (n instanceof Array) {
+                for (let i = 0; i < n.length; i++) {
+                    if (typeof n[i] === "string") {
+                        const t = document.createTextNode(n[i]);
+                        el.appendChild(t);
+                    } else if (n[i] instanceof Node) {
+                        el.appendChild(n[i]);
+                    }
+                }
+            } else if (n instanceof Node) {
+                el.appendChild(n)
+            }
+            return el;
+        }
+        /* used to find the parent gift node */
+        const findTop = (node) => {
+            while (node.parentNode && node.parentNode.nodeName !== 'BODY') {
+                node = node.parentNode;
+                if (node.id !== '') {
+                    return node;
+                }
+            }
+            return node;
+        }
+        const handleGiftClicked = (evt) => {
+            const node = findTop(evt.target);
+            anime({
+                targets: `#${node.id} .lid`,
+                rotate: '1turn',
+                translateY: '-35px',
+                // fillOpacity: 1,
+                // opacity: 1,
+                // fill: '#f0f',
+                // filter: 'brightness(50%)',
+                duration: 800,
+                complete: function (anim) {
+                    // document.querySelector(`#${node.id} .lid`).style = {};
+                    // node.style = {};
+                }
+            });
+            anime({
+                targets: `#${node.id} .circle`,
+                translateY: '-42px',
+                duration: 800,
+                easing: 'easeInOutExpo',
+                zIndex: 1
+            })
+        }
+        /* dynamically create gift nodes */
+        const createGift = (id, color, size, ribbon, hasGift, onClick) => ml("div", {
+            id: id,
+            class: `container gift gift--size-${size}`,
+            onclick: onClick,
+        }, [ml("div", {
+                class: hasGift ? "circle" : ""
+            }),
+            ml("div", {
+                class: `container lid lid--color-${color}`
+            }, [ml("div", {
+                class: `${ribbon === 'horizontal' || ribbon ===  'vertical'? 'ribbon-lid-vertical' : ''}`
+            })]),
+            ml("div", {
+                class: `container box box--color-${color}`
+            }, [ml("div", {
+                    class: `${ribbon === 'horizontal' || ribbon ===  'vertical'? 'ribbon-box-vertical' : ''}`
+                }),
+                ml("div", {
+                    class: `${ribbon === 'horizontal' ? 'ribbon-box-horizontal' : ''}`
+                })
+            ])
+        ]);
+        /* easy: pick one defining feature; 
+         * medium: pick two defining features; 
+         * hard: pick three defining features */
+        let mode = "easy";
+        /* defining features */
+        const featuresGeneral = ["color", "size", "ribbon"]
+        const featuresColor = ["light", "medium", "dark"]
+        const featuresSize = ["small", "medium", "big"]
+        const featuresRibbon = ["horizontal", "vertical", "none"]
+        /*            
+           First, one element is picked randomly from featuresGeneral.
+           If the element is "color", then one element is picked randomly from featuresColor.
+           If the element is "size", then one element is picked randomly from featuresSize.
+           If the element is "ribbon", then one element is picked randomly from featuresRibbon.
+        */
+        const getFeature = () => {
+            const feature = featuresGeneral[Math.floor(Math.random() * featuresGeneral.length)];
+            switch (feature) {
+                case "color":
+                    return [feature, featuresColor[Math.floor(Math.random() * featuresColor.length)]];
+                case "size":
+                    return [feature, featuresSize[Math.floor(Math.random() * featuresSize.length)]];
+                case "ribbon":
+                    return [feature, featuresRibbon[Math.floor(Math.random() * featuresRibbon.length)]];
+            }
+        }
+        /* 
+        Returns an array with features that determine if a gift is in the box.
+           If easy is selected, then only one feature determines 
+           if a gift is in the box and getFeature is only called once.
+
+           If medium is selected, then two features determine 
+           if a gift is in the box and getFeature is called twice. 
+           If the feature is already in the array it is not added again but
+              getFeature is called again.
+
+           If hard is selected, then three features determine 
+           if a gift is in the box and getFeature is called three times. 
+           If the feature is already in the array it is not added again but
+              getFeature is called again.
+           Hence, the elements in the array are all unique.
+        */
+        const getFeatures = (mode) => {
+            const [fKey, fValue] = getFeature();
+            let [mKey, mValue] = getFeature(); // additional feature for medium mode
+            let [hKey, hValue] = getFeature(); // additional feature for hard mode
+            const features = {
+                [fKey]: [fValue]
+            };
+            switch (mode) {
+                case "easy":
+                    return features;
+                case "medium":
+                    while (fKey === mKey && fValue === mValue) {
+                        [mKey, mValue] = getFeature();
+                    }
+                    if (features[mKey]) {
+                        features[mKey].push(mValue);
+                    } else {
+                        features[mKey] = [mValue];
+                    }
+                    return features
+                case "hard":
+                    while (fKey === mKey && fValue === mValue) {
+                        const [k, v] = getFeature();
+                        mKey = k
+                        mValue = v
+                    }
+                    if (features[mKey]) {
+                        features[mKey].push(mValue);
+                    } else {
+                        features[mKey] = [mValue];
+                    }
+                    while ((hKey === mKey && hValue === mValue) || (hKey === fKey && hValue === fValue)) {
+                        const [k, v] = getFeature();
+                        hKey = k
+                        hValue = v
+                    }
+                    if (features[hKey]) {
+                        features[hKey].push(hValue);
+                    } else {
+                        features[hKey] = [hValue];
+                    }
+                    return features;
+            }
+        }
+        /* Checks if for the given color, size, and ribbon the box should contain a gift. 
+         * If two features of the same category are in the array, then they are interpreted as OR
+         * otherwise as AND.
+         */
+        const hasGift = (features, color, size, ribbon) => {
+            for (const [k, v] of Object.entries(features)) {
+                if (k === "color") {
+                    if (v.includes(color)) {
+                        continue;
+                    } else {
+                        return false;
+                    }
+                }
+                if (k === "size") {
+                    if (v.includes(size)) {
+                        continue;
+                    } else {
+                        return false;
+                    }
+                }
+                if (k === "ribbon") {
+                    if (v.includes(ribbon)) {
+                        continue;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+            return true
+        }
+        /* number of gifts to be created */
+        let sampleSize = 5;
+        let definingFeatures = {};
+        const createGifts = (mode, number) => {
+            definingFeatures = getFeatures(mode);
+            for (let i = 0; i < number; i++) {
+                const randomColor = featuresColor[Math.floor(Math.random() * featuresColor.length)]
+                const randomSize = featuresSize[Math.floor(Math.random() * featuresSize.length)]
+                const randomRibbon = featuresRibbon[Math.floor(Math.random() * featuresRibbon
+                    .length)]
+                document.querySelector("#gifts").appendChild(createGift(`gift${i}`, randomColor,
+                    randomSize,
+                    randomRibbon,
+                    hasGift(definingFeatures, randomColor, randomSize, randomRibbon), handleGiftClicked));
+            }
+        }
+        const handleReset = () => {
+            const gifts = document.querySelectorAll('.gift *');
+            for (const gift of gifts) {
+                gift.style = {}
+            }
+        }
+        const checkUserRule = () => {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            let result = true;
+            for (const checkbox of checkboxes) {
+                const [k, v] = checkbox.name.split('--')
+                const shouldBeChecked = Boolean(definingFeatures[k]?.includes(v))
+                if (checkbox.checked !== shouldBeChecked) {
+                    return false;
+                }
+            }
+            return true
+        }
+        const handleSolve = (e) => {
+            e.preventDefault();
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            for (const checkbox of checkboxes) {
+                const [k, v] = checkbox.name.split('--')
+                const shouldBeChecked = Boolean(definingFeatures[k]?.includes(v))
+                checkbox.checked = shouldBeChecked
+            }
+        }
+        document.getElementById('button-solve').addEventListener('click', handleSolve);
+        /* When button-check is clicked, the state of the checkboxes is compared to the definingFeatures. 
+        If the result is false, the user guessed wrong and the fieldset-outer is colored red.
+        */
+        const handleCheck = (e) => {
+            e.preventDefault();
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            let result = checkUserRule();
+            console.log(result)
+            if (result) {
+                document.querySelector('#fieldset-outer').style.setProperty('border-color',
+                    'lightgreen');
+            } else {
+                document.querySelector('#fieldset-outer').style.setProperty('border-color',
+                    'red');
+            }
+        }
+        document.getElementById('button-check').addEventListener('click', handleCheck);
+        const handleNew = (e) => {
+            e.preventDefault();
+            const giftsNode = document.querySelector("#gifts");
+            giftsNode.innerHTML = '';
+            mode = document.getElementById('select-mode').value
+            const s = document.getElementById('box-number').value;
+            sampleSize = s !== '' ? s : sampleSize;
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            for (const checkbox of checkboxes) {
+                checkbox.checked = false
+            }
+            createGifts(mode, sampleSize);
+        }
+        document.getElementById('button-new').addEventListener('click', handleNew);
+        createGifts(mode, sampleSize);
+    </script>
+</body>
+
+</html>
